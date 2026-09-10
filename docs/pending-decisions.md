@@ -69,7 +69,20 @@ deixa de receber na primeira execução com a validação ativa.
 A consulta de medição está pronta em
 [`impact-query.sql`](../specs/003-elegibilidade/impact-query.sql). É somente
 leitura e vive fora de `db/migration` para que o Flyway não a execute. Deve
-rodar contra uma cópia dos dados de produção.
+rodar contra uma cópia dos dados de produção, substituindo o ano do período a
+processar.
+
+**A consulta já foi verificada** contra o banco de desenvolvimento em
+2026-09-10: detectou o único beneficiário violador entre os cinco semeados,
+ignorou os conformes, respeitou o desvio da região `99` e restringiu-se a
+cadastros ativos. Não é preciso auditá-la antes de usar; basta executá-la.
+
+Como executar, ajustando conexão e ano do período:
+
+```bash
+psql -U <usuario> -d <base> -v ON_ERROR_STOP=1 \
+  < specs/003-elegibilidade/impact-query.sql
+```
 
 | Resultado | Encaminhamento sugerido |
 |---|---|

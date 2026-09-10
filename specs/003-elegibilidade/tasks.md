@@ -107,6 +107,22 @@ tarefas rodam por Docker, conforme o plano técnico.
   | Poucos afetados | Tratar caso a caso antes da implantação |
   | Muitos afetados | Não implantar; a regra legada provavelmente não reflete a operação real e precisa de decisão de negócio |
 
+  **A consulta está verificada.** Executada em 2026-09-10 contra o banco de
+  desenvolvimento, com os cinco beneficiários semeados por `V2`, `V4`, `V6` e
+  `V7`. Resultado idêntico ao previsto antes da execução:
+
+  | `motivo_de_recusa` | `program_code` | `program_type` | `beneficiarios_afetados` |
+  |---|---|---|---|
+  | `IDADE_ABAIXO_DO_MINIMO_PREVIDENCIARIO` | `P002` | `P` | 1 |
+
+  Os quatro comportamentos relevantes foram exercitados: detectou o único
+  beneficiário violador (46 anos em programa tipo `P`), ignorou os três
+  conformes, respeitou o desvio da região `99` e restringiu-se a cadastros
+  ativos.
+
+  O que falta é apenas a execução contra os dados de produção. A ferramenta
+  não é mais uma incógnita.
+
 ## Regras não implementadas por ausência de evidência
 
 As regras abaixo constam da documentação de 2012 e **não** existem no código

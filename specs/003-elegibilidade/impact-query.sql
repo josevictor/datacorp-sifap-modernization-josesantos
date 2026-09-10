@@ -25,6 +25,14 @@
 --
 -- Substitua 2026 pelo ano do período que será processado: a idade usa o ano
 -- do período, conforme a fonte única definida no plano da feature 003.
+--
+-- Verificação
+-- -----------
+-- Executada em 2026-09-10 contra o banco de desenvolvimento, com os cinco
+-- beneficiários semeados por V2, V4, V6 e V7. Retornou exatamente uma linha,
+-- IDADE_ABAIXO_DO_MINIMO_PREVIDENCIARIO / P002 / P / 1, conforme previsto:
+-- detectou o violador, ignorou os conformes, respeitou o desvio da região 99
+-- e restringiu-se a cadastros ativos.
 
 WITH parametros AS (
     SELECT 2026 AS ano_periodo

@@ -86,8 +86,15 @@ tarefas rodam por Docker, conforme o plano técnico.
   testes vivem em `site/tests` e são varridos pelo script oficial. Nenhum
   `REQ-ID` das features `001`, `002` ou `003` ficou sem teste. Esse job emite
   `::warning` e não bloqueia o merge; o bloqueante é `legacy-traceability`.
-- [ ] T224 — Medir, em produção, quantos beneficiários ativos recebem hoje por
-  programa cujo tipo os recusaria. Bloqueia a implantação, não os testes.
+- [ ] T224 — **BLOQUEADA por dependência externa.** Medir, em produção, quantos
+  beneficiários ativos recebem hoje por programa cujo tipo os recusaria.
+  Bloqueia a implantação, não os testes nem o merge.
+
+  Não há trabalho de engenharia pendente nesta tarefa. A equipe da imersão não
+  tem acesso a dados de produção, e a medição não pode ser simulada: o número
+  que decide a implantação depende do cadastro real. A tarefa permanece aberta
+  de forma deliberada, como registro de risco conhecido, e deve ser retomada
+  por quem tiver o acesso.
 
   Consulta pronta em [`impact-query.sql`](impact-query.sql). É somente leitura
   e fica fora de `db/migration` de propósito, para que o Flyway não a execute.

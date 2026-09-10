@@ -22,8 +22,7 @@
 | # | Pendência | Responsável | Bloqueia |
 |---|---|---|---|
 | 1 | Ratificar a separação entre a dedução simplificada e `CALCDSCT` | Coordenação de Benefícios | Fechamento de `SIFAP-M-09` e do ADR-0004 |
-| 2 | Medir o impacto das regras por tipo de programa | Coordenação de Benefícios + DBA + operação do batch | Implantação da feature `003` |
-| 3 | Alinhar com a Dupla 4 a autoria de `VALELEG` | Dupla 3 e Dupla 4 | Nada; evita retrabalho |
+| 2 | Medir o impacto das regras por tipo de programa | Coordenação de Benefícios + DBA + operação do batch | Implantação da feature `003` || 3 | Alinhar com a Dupla 4 a autoria de `VALELEG` | Dupla 3 e Dupla 4 | Nada; evita retrabalho |
 
 ---
 
@@ -65,6 +64,12 @@ As regras por tipo de programa **não têm esse escape**. São literais fixos em
 
 **Consequência:** um beneficiário ativo hoje em programa cujo tipo o recusa
 deixa de receber na primeira execução com a validação ativa.
+
+> [!WARNING]
+> A equipe da imersão **não tem acesso a dados de produção**, então esta
+> medição não foi feita e não pode ser simulada. A feature `003` está pronta e
+> testada, mas não deve ser implantada antes que alguém com acesso ao cadastro
+> real execute a consulta abaixo e avalie o resultado.
 
 A consulta de medição está pronta em
 [`impact-query.sql`](../specs/003-elegibilidade/impact-query.sql). É somente

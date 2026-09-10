@@ -92,6 +92,31 @@ jobs:
       run:
         shell: bash
         working-directory: backend
+    # O ADR-0003 removeu o Testcontainers: os testes de integração esperam um
+    # PostgreSQL 16 real já disponível, fornecido pelo serviço db-test do Compose
+    # no ambiente local. A CI não usa o Compose, então precisa oferecer o
+    # equivalente aqui, ou toda classe @SpringBootTest falha por falta de conexão.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: sifap_test
+          POSTGRES_USER: sifap
+          # Banco efêmero, criado e destruído dentro desta execução, sem dados e
+          # inalcançável de fora do runner. Não é credencial e não vai para
+          # secrets: fixá-la aqui mantém o job reproduzível por qualquer fork.
+          POSTGRES_PASSWORD: sifap_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sifap -d sifap_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/sifap_test
+      SPRING_DATASOURCE_USERNAME: sifap
+      SPRING_DATASOURCE_PASSWORD: sifap_ci
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Configurar JDK 21

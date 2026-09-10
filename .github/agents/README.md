@@ -1,6 +1,6 @@
 # Índice de agentes
 
-Este diretório contém os agentes personalizados do GitHub Copilot para a imersão: **17** no total, cada um em seu próprio `<name>.agent.md`.
+Este diretório contém os agentes personalizados do GitHub Copilot para a imersão: **18** no total, cada um em seu próprio `<name>.agent.md`.
 
 > [!NOTE]
 > O Copilot descobre arquivos `*.agent.md` em `.github/agents/`. Invoque um agente por seu `name` com `@<name>` (por exemplo, `@archaeologist`). O `name` também vincula prompts: um arquivo `*.prompt.md` seleciona seu agente pela chave `agent:` do frontmatter. Portanto, o ID do agente é um contrato, não um rótulo.
@@ -11,6 +11,10 @@ O kit usa **duas camadas de agentes**. Este é o modelo mental central, por isso
 - **Agentes de persona (10)**: um por papel da equipe, usados pela dupla responsável por esse papel.
 
 Outros três **agentes especialistas** ficam fora dessas duas camadas. Eles aprofundam trabalhos específicos e aparecem ao fim.
+
+O [`sdd-orchestrator`](sdd-orchestrator.agent.md) é um coordenador de fluxo.
+Ele verifica os portões do SDD e encaminha o trabalho para os agentes
+existentes, sem substituir o Spec-Kit nem decidir regras de negócio abertas.
 
 ## Agentes de estágio
 
@@ -50,11 +54,17 @@ Três especialistas que não pertencem à camada de estágio nem à de persona. 
 | [`expert-react-frontend-engineer`](expert-react-frontend-engineer.agent.md) | `@expert-react-frontend-engineer` | 0 | Especialista aprofundado de frontend para a IU do SIFAP: React 19 + Next.js 15 App Router, limites entre servidor e cliente, Server Actions, IU otimista, acessibilidade e desempenho. Use para trabalho concentrado no frontend; use @implementer para um único item rastreável de tasks.md ou qualquer alteração de backend. |
 | [`java-mcp-expert`](java-mcp-expert.agent.md) | `@java-mcp-expert` | 0 | Especialista em nova implementação de servidores Model Context Protocol (MCP) em Java com o MCP Java SDK oficial, Project Reactor e Spring Boot 3.3. Use quando a equipe ampliar a cadeia de ferramentas com um servidor MCP personalizado; a modernização do SIFAP de legado para Java pertence a @archaeologist, @architect e @builder. |
 
+### Coordenador de fluxo
+
+| Agente | Invocação | Prompts vinculados | Descrição |
+| --- | --- | --- | --- |
+| [`sdd-orchestrator`](sdd-orchestrator.agent.md) | `@sdd-orchestrator` | 0 | Coordena gates do Spec-Driven Development, verifica rastreabilidade, preserva mistérios abertos e encaminha cada etapa para o agente apropriado. |
+
 ## Responsabilidade pelos prompts
 
 Os 59 prompts em [`../prompts/`](../prompts/) vinculam-se a um agente por sua chave `agent:`:
 
-- Todos os **59** se vinculam a um dos **14** agentes nomeados acima (estágio + persona); nenhum prompt permanece no agente genérico integrado `agent: "agent"`. As contagens por agente estão nas colunas **Prompts vinculados** das tabelas.
+- Todos os **59** se vinculam a um dos **14** agentes nomeados acima (estágio + persona); nenhum prompt permanece no agente genérico integrado `agent: "agent"`. O coordenador `sdd-orchestrator` não possui prompts vinculados. As contagens por agente estão nas colunas **Prompts vinculados** das tabelas.
 - Os três agentes especialistas (`se-ux-ui-designer`, `expert-react-frontend-engineer`, `java-mcp-expert`) possuem **0** prompts e são invocados diretamente.
 
 Recalcule as contagens com `grep -h '^agent:' ../prompts/*.prompt.md | sort | uniq -c`.

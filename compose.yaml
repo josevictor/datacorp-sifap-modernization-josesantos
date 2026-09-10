@@ -18,11 +18,17 @@ services:
   backend:
     build:
       context: ./backend
+    volumes:
+      # A extração legada vive fora de backend/; montada somente para leitura
+      # porque é evidência arqueológica, não dado de aplicação.
+      - ./01-archaeology/legacy-seed-data:/legacy-seed-data:ro
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-sifap}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-sifap}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       SPRING_FLYWAY_LOCATIONS: classpath:db/migration,classpath:db/dev
+      SIFAP_LEGACY_SEED_DIR: /legacy-seed-data
+      SIFAP_LEGACY_IMPORT_ENABLED: ${SIFAP_LEGACY_IMPORT_ENABLED:-false}
     ports:
       - "${BACKEND_HOST_PORT:-8080}:8080"
     depends_on:
@@ -51,11 +57,15 @@ services:
     working_dir: /workspace
     volumes:
       - ./backend:/workspace
+      - ./01-archaeology/legacy-seed-data:/legacy-seed-data:ro
       - maven_cache:/root/.m2
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db-test:5432/sifap_test
       SPRING_DATASOURCE_USERNAME: sifap
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      # A extração legada vive fora de backend/, então precisa ser montada e
+      # localizada explicitamente; o padrão do código serve à execução na IDE.
+      SIFAP_LEGACY_SEED_DIR: /legacy-seed-data
     command: ["mvn", "-B", "test"]
     depends_on:
       db-test:

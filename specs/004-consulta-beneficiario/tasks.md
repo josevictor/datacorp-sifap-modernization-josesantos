@@ -55,8 +55,14 @@ tarefas rodam por Docker, conforme o plano técnico.
 - [x] T321 — Executar a suíte do frontend por Docker.
   **Evidência (2026-09-10):** `docker compose --profile test run --rm
   frontend-test` → 10 testes em 2 arquivos, todos verdes.
-- [ ] T322 — Validar manualmente a consulta por CPF e por NIS com o ambiente
+- [x] T322 — Validar manualmente a consulta por CPF e por NIS com o ambiente
   em pé.
+  **Evidência (2026-09-10):** consulta do CPF `39053344705` no ambiente
+  Docker. Máscara `***.***.447-05` sem os seis primeiros dígitos; situação
+  `A — Ativo` com código e descrição; 12 das 15 linhas semeadas em `V9`,
+  ordenadas de `03/2026` a `04/2025`. Os três períodos mais antigos foram
+  descartados, confirmando `REQ-040`: como a `V9` insere fora de ordem
+  cronológica, o comportamento legado teria devolvido outro conjunto.
 - [x] T323 — Confirmar que todo `REQ-ID` desta feature aparece em ao menos um
   comentário inline de teste.
 - [x] T324 — Executar a validação de rastreabilidade legada.

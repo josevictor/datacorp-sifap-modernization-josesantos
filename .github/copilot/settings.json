@@ -1,0 +1,20 @@
+{
+  "extraKnownMarketplaces": {
+    "datacorp-mm-team-kit": {
+      "source": {
+        "source": "directory",
+        "path": ".github/plugins"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "azure-cloud-development@datacorp-mm-team-kit": true,
+    "context-engineering@datacorp-mm-team-kit": true,
+    "copilot-sdk@datacorp-mm-team-kit": true,
+    "database-data-management@datacorp-mm-team-kit": true,
+    "frontend-web-dev@datacorp-mm-team-kit": true,
+    "java-development@datacorp-mm-team-kit": true,
+    "software-engineering-team@datacorp-mm-team-kit": true,
+    "testing-automation@datacorp-mm-team-kit": true
+  }
+}

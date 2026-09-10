@@ -1,0 +1,9 @@
+{
+  "name": "arch",
+  "description": "Kit de ferramentas de arquitetura e modernização: produza um documento de arquitetura com fontes para um repositório clonado localmente e gere um plano de modernização em fases que executa automaticamente o modo Documentation (Documentação) quando necessário.",
+  "version": "1.0.0",
+  "keywords": ["architecture", "modernization", "documentation", "migration", "onboarding"],
+  "author": { "name": "Awesome Copilot Community" },
+  "repository": "https://github.com/github/awesome-copilot",
+  "license": "MIT"
+}

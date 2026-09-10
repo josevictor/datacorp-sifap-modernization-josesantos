@@ -1,0 +1,13 @@
+{
+  "name": "testing-automation",
+  "description": "Coleção abrangente para escrita de testes, automação de testes e desenvolvimento orientado a testes, incluindo testes unitários, testes de integração e estratégias de teste de ponta a ponta.",
+  "version": "1.0.0",
+  "author": { "name": "Awesome Copilot Community" },
+  "repository": "https://github.com/github/awesome-copilot",
+  "license": "MIT",
+  "keywords": ["testing", "tdd", "automation", "unit-tests", "integration", "playwright", "jest", "nunit"],
+  "skills": [
+    "../../skills/java-junit/",
+    "../../skills/playwright-generate-test/"
+  ]
+}

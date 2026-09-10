@@ -1,0 +1,20 @@
+{
+  "name": "datacorp-mm-team-kit",
+  "owner": { "name": "DataCorp Modernization Team Kit" },
+  "metadata": {
+    "description": "Catálogo local que reúne as habilidades e os agentes selecionados do Copilot versionados em .github/ para o kit de imersão em modernização do SIFAP.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    { "name": "arch", "source": "arch", "version": "1.0.0", "description": "Kit de ferramentas de arquitetura e modernização (entrada de catálogo; nenhum componente incorporado neste kit)." },
+    { "name": "azure-cloud-development", "source": "azure-cloud-development", "version": "1.0.1", "description": "Habilidades de IaC no Azure, otimização de custos, preços e integridade de recursos." },
+    { "name": "chromium-control-canvas", "source": "chromium-control-canvas", "version": "1.0.2", "description": "Painel interativo do Chromium (entrada de catálogo; extensão da CLI não incorporada neste kit)." },
+    { "name": "context-engineering", "source": "context-engineering", "version": "1.0.0", "description": "Mapeamento de contexto para maximizar a eficácia do Copilot." },
+    { "name": "copilot-sdk", "source": "copilot-sdk", "version": "1.0.0", "description": "Crie aplicações baseadas em agentes com o GitHub Copilot SDK." },
+    { "name": "database-data-management", "source": "database-data-management", "version": "1.0.0", "description": "Habilidades de revisão de código e otimização de PostgreSQL." },
+    { "name": "frontend-web-dev", "source": "frontend-web-dev", "version": "1.0.0", "description": "Agente de interface web React e habilidade de geração de testes Playwright." },
+    { "name": "java-development", "source": "java-development", "version": "1.0.0", "description": "Habilidades de estruturação inicial do Spring Boot, Javadoc, JUnit 5 e boas práticas do Spring Boot." },
+    { "name": "software-engineering-team", "source": "software-engineering-team", "version": "1.0.0", "description": "Agente de projeto da experiência e da interface do usuário (UX/UI) do conjunto da equipe de engenharia de software." },
+    { "name": "testing-automation", "source": "testing-automation", "version": "1.0.0", "description": "Habilidades de geração de testes JUnit 5 e Playwright." }
+  ]
+}

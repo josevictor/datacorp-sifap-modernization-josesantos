@@ -1,0 +1,74 @@
+# Arquivos compilados em bytecode, otimizados ou DLL
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Extensões C
+*.so
+
+# Distribuição e empacotamento
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Registros do instalador
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Relatórios de testes unitários e cobertura
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Traduções
+*.mo
+*.pot
+
+# Ambientes
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Verificador de tipos Pyre
+.pyre/
+
+# Analisador estático de tipos pytype
+.pytype/
+
+# Símbolos de depuração do Cython
+cython_debug/

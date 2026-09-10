@@ -1,0 +1,96 @@
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+* SUBPROGRAM: SUBVALCP
+* SYSTEM:   SIFAP - PAYMENT INSPECTION AND ADMINISTRATION SYSTEM
+* AUTHOR:   MARCIA HELENA OLIVEIRA
+* DATE:     12/03/1998
+* CHANGED:  17/05/2005 - MARCIA HELENA  - ADJUST CPF VALIDATION
+* CHANGED:  07/06/2011 - ROBERTO MENDES - USE CCVALCPF
+* PURPOSE:  CPF VALIDATION SUBPROGRAM - MODULUS 11.
+*           SINGLE SOURCE OF TRUTH FOR CPF IN SIFAP.
+*           DOES NOT INPUT OR WRITE - RETURNS EVERYTHING VIA PDA.
+*
+* INVOCATION:
+*   CALLNAT 'SUBVALCP' #PV-TYPE-DOC #PV-CPF #PV-NIS
+*                      #PV-COD-RETURN #PV-MSG
+*                      #PV-IND-SPECIAL
+*
+* PRECONDITION:
+*   #PV-TYPE-DOC = 'C'
+*   #PV-CPF      = CPF WITH 11 POSITIONS, LEFT-PADDED WITH ZEROS
+*
+* POSTCONDITION:
+*   #PV-COD-RETURN = 0 WHEN THE CPF IS VALID
+*
+* NOTE:     PARAMETER #PV-NIS IS NOT USED HERE. THE PDA IS
+*           SHARED WITH SUBVALNI PER INTERNAL STANDARD
+*           (NT-SUPDE-011/1998). DO NOT REMOVE IT FROM THE LIST.
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+DEFINE DATA
+PARAMETER USING PDAVALID
+LOCAL
+  1 #CPF-STR             (A11)
+  1 #CPF-OK              (L)
+  1 #CPF-DIG             (N1/1:11)
+  1 #CPF-SUM             (N5)
+  1 #CPF-QUOT            (N5)
+  1 #CPF-REMAIN          (N2)
+  1 #CPF-DV1             (N1)
+  1 #CPF-DV2             (N1)
+  1 #CPF-WEIGHT          (N2)
+  1 #CPF-IDX             (N2)
+  1 #CPF-EQUAL           (L)
+END-DEFINE
+*
+RESET #PV-COD-RETURN #PV-MSG
+MOVE 'N' TO #PV-IND-SPECIAL
+*
+* ============================================
+* INPUT PARAMETER CONSISTENCY
+* ============================================
+IF #PV-TYPE-DOC NE 'C'
+  MOVE 1004 TO #PV-COD-RETURN
+  MOVE 'INVALID DOCUMENT TYPE FOR SUBVALCP' TO #PV-MSG
+  ESCAPE ROUTINE
+END-IF
+*
+IF #PV-CPF = ' ' OR #PV-CPF = '00000000000'
+  MOVE 1002 TO #PV-COD-RETURN
+  MOVE 'CPF NOT PROVIDED' TO #PV-MSG
+  ESCAPE ROUTINE
+END-IF
+*
+IF #PV-CPF NE MASK(NNNNNNNNNNN)
+  MOVE 1005 TO #PV-COD-RETURN
+  MOVE 'CPF CONTAINS NONNUMERIC CHARACTER' TO #PV-MSG
+  ESCAPE ROUTINE
+END-IF
+*
+* ============================================
+* MODULUS 11 VALIDATION - STANDARD ROUTINE
+* ============================================
+MOVE #PV-CPF TO #CPF-STR
+PERFORM VALID-CPF-STANDARD
+*
+IF NOT #CPF-OK
+  MOVE 1001 TO #PV-COD-RETURN
+  MOVE 'INVALID CPF - CHECK DIGIT' TO #PV-MSG
+  ESCAPE ROUTINE
+END-IF
+*
+* VALID CPF
+MOVE 0 TO #PV-COD-RETURN
+RESET #PV-MSG
+*
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ON ERROR
+  MOVE 9999 TO #PV-COD-RETURN
+  COMPRESS 'NATURAL ERROR' *ERROR-NR
+           'LINE' *ERROR-LINE
+           'PGM' *PROGRAM INTO #PV-MSG
+  ESCAPE ROUTINE
+END-ERROR
+*
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+INCLUDE CCVALCPF
+*
+END

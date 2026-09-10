@@ -1,0 +1,243 @@
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+* PROGRAM:  VALDOCS
+* SYSTEM:   SIFAP - PAYMENT INSPECTION AND ADMINISTRATION SYSTEM
+* AUTHOR:   ANA LUCIA PEREIRA
+* DATE:     14/05/1998
+* CHANGED:  22/09/2003 - ANA LUCIA - ADDED RG VALIDATION
+* CHANGED:  07/06/2011 - ROBERTO MENDES - ADJUSTED SPECIAL CHECK
+* CHANGED:  18/08/2011 - ROBERTO MENDES - ADDED NIS/PIS VALIDATION
+* PURPOSE:  BENEFICIARY DOCUMENT VALIDATION
+*           CPF, RG AND SUPPLEMENTARY DOCUMENTS - FILE 150
+*           TICKET 6621/2011 - UNTIL 2011 NIS WAS NOT
+*           VALIDATED IN ANY SIFAP MODULE.
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+DEFINE DATA
+LOCAL USING PDAVALID
+LOCAL
+* VIEW DECLARED SINCE 1998 AND NEVER READ - TICKET 4471/2003
+  1 BENEFICIARY-V VIEW OF BENEFIC
+    2 NUM-CPF             (A11)
+    2 FULL-NAME           (A60)
+    2 RG-NUMBER           (A15)
+    2 GRP-ADDRESS
+      3 UF                (A2)
+    2 IND-DOCS-OK         (A1)
+*
+  1 #CPF                  (N11)
+  1 #NIS                  (N11)
+  1 #RG                   (A15)
+  1 #TITLE                (A12)
+  1 #CTPS                 (A15)
+  1 #RESULT               (A1)
+  1 #MSG                  (A60/1:5)
+  1 #QTY-ERRS             (N2)
+  1 #CPF-OK               (L)
+  1 #RG-OK                (L)
+  1 #DOC-SPECIAL-OK       (L)
+  1 #I                    (N2)
+  1 #RG-LEN               (N2)
+  1 #PREFIX-CPF           (A3)
+*
+* CPF VALIDATION
+  1 #CPF-STR              (A11)
+  1 #DIG                  (N1/1:11)
+  1 #SUM                  (N5)
+  1 #REMAIN               (N3)
+  1 #DV1                  (N1)
+  1 #DV2                  (N1)
+  1 #WEIGHT               (N2)
+*
+* SPECIAL PREFIXES
+  1 #PREFIX-SPECIAL       (A3/1:8)
+END-DEFINE
+*
+MOVE 0 TO #QTY-ERRS
+MOVE 'V' TO #RESULT
+*
+* LOAD SPECIAL DOCUMENT PREFIXES
+MOVE '000' TO #PREFIX-SPECIAL(1)
+MOVE '001' TO #PREFIX-SPECIAL(2)
+MOVE '002' TO #PREFIX-SPECIAL(3)
+MOVE '010' TO #PREFIX-SPECIAL(4)
+MOVE '011' TO #PREFIX-SPECIAL(5)
+MOVE '099' TO #PREFIX-SPECIAL(6)
+MOVE '100' TO #PREFIX-SPECIAL(7)
+MOVE '999' TO #PREFIX-SPECIAL(8)
+*
+INPUT 'SIFAP - DOCUMENT VALIDATION' /
+      '===========================' /
+      'CPF...........:' #CPF /
+      'NIS/PIS.......:' #NIS /
+      'RG............:' #RG /
+      'VOTER ID......:' #TITLE /
+      'CTPS..........:' #CTPS
+*
+* ============================================
+* CPF VALIDATION
+* ============================================
+PERFORM VALID-CPF-DOC
+IF NOT #CPF-OK
+  ADD 1 TO #QTY-ERRS
+  MOVE 'INVALID CPF' TO #MSG(#QTY-ERRS)
+  MOVE 'I' TO #RESULT
+END-IF
+*
+* ============================================
+* RG VALIDATION
+* ============================================
+PERFORM VALID-RG
+IF NOT #RG-OK
+  ADD 1 TO #QTY-ERRS
+  MOVE 'INVALID RG OR INCORRECT FORMAT' TO #MSG(#QTY-ERRS)
+  MOVE 'I' TO #RESULT
+END-IF
+*
+* ============================================
+* SPECIAL DOCUMENT CHECK
+* ============================================
+PERFORM CHECK-DOC-SPECIAL
+*
+* ============================================
+* NIS/PIS VALIDATION - TICKET 6621/2011
+* UNTIL 2011 NIS WAS NOT VALIDATED ANYWHERE.
+* CHECK PERFORMED AFTER CHECK-DOC-SPECIAL BY DECISION
+* OF THE BENEFITS DEPARTMENT - SEE TICKET 6621/2011.
+* ============================================
+MOVE 'N' TO #PV-TYPE-DOC
+RESET #PV-CPF
+MOVE EDITED #NIS (EM=99999999999) TO #PV-NIS
+CALLNAT 'SUBVALNI' #PV-TYPE-DOC #PV-CPF #PV-NIS
+                   #PV-COD-RETURN #PV-MSG
+                   #PV-IND-SPECIAL
+IF #PV-COD-RETURN NE 0
+  ADD 1 TO #QTY-ERRS
+  MOVE #PV-MSG TO #MSG(#QTY-ERRS)
+  MOVE 'I' TO #RESULT
+END-IF
+*
+* RESULT
+WRITE 'DOCUMENT VALIDATION RESULT:' #RESULT
+FOR #I = 1 TO #QTY-ERRS
+  WRITE #I ':' #MSG(#I)
+END-FOR
+IF #DOC-SPECIAL-OK
+  WRITE '** SPECIAL DOCUMENT VALIDATED **'
+END-IF
+*
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ON ERROR
+  WRITE 'NATURAL ERROR' *ERROR-NR
+        'LINE' *ERROR-LINE
+        'PGM' *PROGRAM
+  MOVE 'I' TO #RESULT
+  TERMINATE 12
+END-ERROR
+*
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+DEFINE SUBROUTINE VALID-CPF-DOC
+  MOVE TRUE TO #CPF-OK
+  IF #CPF = 0
+    MOVE FALSE TO #CPF-OK
+    ESCAPE ROUTINE
+  END-IF
+  MOVE #CPF TO #CPF-STR
+  FOR #I = 1 TO 11
+    DECIDE ON FIRST VALUE OF SUBSTR(#CPF-STR,#I,1)
+      VALUE '0'
+        MOVE 0 TO #DIG(#I)
+      VALUE '1'
+        MOVE 1 TO #DIG(#I)
+      VALUE '2'
+        MOVE 2 TO #DIG(#I)
+      VALUE '3'
+        MOVE 3 TO #DIG(#I)
+      VALUE '4'
+        MOVE 4 TO #DIG(#I)
+      VALUE '5'
+        MOVE 5 TO #DIG(#I)
+      VALUE '6'
+        MOVE 6 TO #DIG(#I)
+      VALUE '7'
+        MOVE 7 TO #DIG(#I)
+      VALUE '8'
+        MOVE 8 TO #DIG(#I)
+      VALUE '9'
+        MOVE 9 TO #DIG(#I)
+      NONE VALUE
+        MOVE FALSE TO #CPF-OK
+        ESCAPE ROUTINE
+    END-DECIDE
+  END-FOR
+* FIRST CHECK DIGIT
+  MOVE 0 TO #SUM
+  MOVE 10 TO #WEIGHT
+  FOR #I = 1 TO 9
+    COMPUTE #SUM = #SUM + (#DIG(#I) * #WEIGHT)
+    SUBTRACT 1 FROM #WEIGHT
+  END-FOR
+  COMPUTE #REMAIN = #SUM - ((#SUM / 11) * 11)
+  IF #REMAIN < 2
+    MOVE 0 TO #DV1
+  ELSE
+    COMPUTE #DV1 = 11 - #REMAIN
+  END-IF
+  IF #DV1 NE #DIG(10)
+    MOVE FALSE TO #CPF-OK
+    ESCAPE ROUTINE
+  END-IF
+* SECOND CHECK DIGIT
+  MOVE 0 TO #SUM
+  MOVE 11 TO #WEIGHT
+  FOR #I = 1 TO 10
+    COMPUTE #SUM = #SUM + (#DIG(#I) * #WEIGHT)
+    SUBTRACT 1 FROM #WEIGHT
+  END-FOR
+  COMPUTE #REMAIN = #SUM - ((#SUM / 11) * 11)
+  IF #REMAIN < 2
+    MOVE 0 TO #DV2
+  ELSE
+    COMPUTE #DV2 = 11 - #REMAIN
+  END-IF
+  IF #DV2 NE #DIG(11)
+    MOVE FALSE TO #CPF-OK
+  END-IF
+END-SUBROUTINE
+*
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+DEFINE SUBROUTINE VALID-RG
+  MOVE TRUE TO #RG-OK
+  IF #RG = ' '
+    MOVE FALSE TO #RG-OK
+    ESCAPE ROUTINE
+  END-IF
+* RG MUST HAVE AT LEAST 5 CHARACTERS
+  EXAMINE #RG FOR ' ' GIVING POSITION #RG-LEN
+  IF #RG-LEN > 0
+    SUBTRACT 1 FROM #RG-LEN
+  ELSE
+    MOVE 15 TO #RG-LEN
+  END-IF
+  IF #RG-LEN < 5
+    MOVE FALSE TO #RG-OK
+  END-IF
+END-SUBROUTINE
+*
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+* CHECK SPECIAL DOCUMENTS - GOVERNMENT/TEST PREFIXES
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+DEFINE SUBROUTINE CHECK-DOC-SPECIAL
+  MOVE FALSE TO #DOC-SPECIAL-OK
+  MOVE #CPF TO #CPF-STR
+  MOVE SUBSTR(#CPF-STR,1,3) TO #PREFIX-CPF
+  FOR #I = 1 TO 8
+    IF #PREFIX-CPF = #PREFIX-SPECIAL(#I)
+      MOVE TRUE TO #DOC-SPECIAL-OK
+      MOVE TRUE TO #CPF-OK
+      MOVE 'V' TO #RESULT
+      MOVE 0 TO #QTY-ERRS
+      ESCAPE BOTTOM
+    END-IF
+  END-FOR
+END-SUBROUTINE
+*
+END

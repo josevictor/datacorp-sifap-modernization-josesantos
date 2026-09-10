@@ -1,0 +1,255 @@
+name: Análise de Markdown e qualidade das especificações
+
+# `portugues-br` espelha todo o kit em pt-BR, portanto precisa das mesmas verificações de Markdown,
+# primitivas e rastreabilidade que `main`. Consulte a mesma observação em ci.yml.
+on:
+  push:
+    branches: [main, develop, portugues-br, espanol, "spec/**"]
+  pull_request:
+    paths:
+      - ".github/workflows/spec-quality.yml"
+      - ".github/scripts/**"
+      - "**.md"
+      - "specs/**"
+      - "docs/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  markdown-lint:
+    name: Análise de Markdown
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Executar markdownlint
+        uses: DavidAnson/markdownlint-cli2-action@992badcdf24e3b8eb7e87ff9287fe931bcb00c6e # v20
+        with:
+          # As exclusões ficam em .markdownlint-cli2.jsonc, que é a fonte única
+          # da verdade. Não as liste novamente aqui: uma segunda lista diverge.
+          globs: "**/*.md"
+
+  copilot-primitives:
+    name: Verificação de divergência das primitivas do Copilot
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Validar agentes, prompts, instruções, habilidades e ganchos (hooks)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/validate-copilot-primitives.py
+
+  spec-traceability:
+    name: Relatar rastreabilidade de testes por REQ-ID
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Relatar REQ-IDs ainda não referenciados por testes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          requirement_id = r"REQ-(?:\d+|[A-Z]+(?:-[A-Z]+)*-\d+)"
+          requirement_declaration_pattern = re.compile(
+              rf"^\s*(?:#{{1,6}}\s+(?P<heading>{requirement_id})(?=\s|:|$)|"
+              rf"(?:[-*]\s+)?(?:\*\*)?(?P<key>{requirement_id})(?:\*\*)?"
+              r"(?:\s+\([^)]+\))?(?:\s*:|\s+-|\s*$))"
+          )
+          requirement_reference_pattern = re.compile(rf"\b({requirement_id})\b")
+
+          def declared_requirements(text: str) -> set[str]:
+              return {
+                  match.group("heading") or match.group("key")
+                  for line in text.splitlines()
+                  if (match := requirement_declaration_pattern.match(line))
+              }
+
+          specs_directory = Path("specs")
+          if not specs_directory.is_dir():
+              print("O diretório specs/ ainda não existe. Ignorando o relatório de rastreabilidade de testes.")
+              raise SystemExit
+
+          spec_requirements = {
+              requirement
+              for path in specs_directory.rglob("*")
+              if path.is_file()
+              for requirement in declared_requirements(
+                  path.read_text(encoding="utf-8", errors="ignore")
+              )
+          }
+
+          def is_test_file(path: Path) -> bool:
+              return (
+                  "tests" in path.parts
+                  or "__tests__" in path.parts
+                  or ".test." in path.name
+                  or ".spec." in path.name
+              )
+
+          test_requirements = set()
+          backend_tests = Path("backend/src/test")
+          if backend_tests.is_dir():
+              for path in backend_tests.rglob("*"):
+                  if path.is_file():
+                      test_requirements.update(
+                          requirement_reference_pattern.findall(
+                              path.read_text(encoding="utf-8", errors="ignore")
+                          )
+                      )
+
+          frontend_directory = Path("frontend")
+          if frontend_directory.is_dir():
+              for path in frontend_directory.rglob("*"):
+                  if path.is_file() and is_test_file(path):
+                      test_requirements.update(
+                          requirement_reference_pattern.findall(
+                              path.read_text(encoding="utf-8", errors="ignore")
+                          )
+                      )
+
+          portal_tests = Path("site/tests")
+          if portal_tests.is_dir():
+              for path in portal_tests.rglob("*"):
+                  if path.is_file() and is_test_file(path):
+                      try:
+                          test_source = path.read_text(encoding="utf-8")
+                      except UnicodeDecodeError:
+                          print(f"::warning file={path}::Entrada de teste sem UTF-8 ignorada no relatório informativo de REQ-IDs.")
+                          continue
+                      test_requirements.update(
+                          requirement_reference_pattern.findall(test_source)
+                      )
+
+          missing = sorted(spec_requirements - test_requirements)
+          if missing:
+              print(
+                  "::warning::REQ-IDs declarados em specs/, mas ainda não referenciados "
+                  "por testes automatizados:"
+              )
+              print("\n".join(missing))
+          elif spec_requirements:
+              print("Todos os REQ-IDs declarados em specs/ são referenciados por testes automatizados.")
+          else:
+              print("Nenhum REQ-ID foi encontrado em specs/ até o momento.")
+          PY
+
+  legacy-traceability:
+    name: Verificação de rastreabilidade com o legado (todo REQ-ID deve citar um .NSN/.ddm ou uma nova implementação [GREENFIELD])
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Verificar source_legacy em todos os requisitos
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          requirements_directory = Path("specs")
+          if not requirements_directory.is_dir():
+              print("O diretório specs/ ainda não existe. Ignorando a verificação de rastreabilidade com o legado.")
+              raise SystemExit
+
+          requirement_id = r"REQ-(?:\d+|[A-Z]+(?:-[A-Z]+)*-\d+)"
+          requirement_declaration_pattern = re.compile(
+              rf"^\s*(?:#{{1,6}}\s+(?P<heading>{requirement_id})(?=\s|:|$)|"
+              rf"(?:[-*]\s+)?(?:\*\*)?(?P<key>{requirement_id})(?:\*\*)?"
+              r"(?:\s+\([^)]+\))?(?:\s*:|\s+-|\s*$))"
+          )
+          source_pattern = re.compile(r"^\s*source_legacy\s*:\s*(.+?)\s*$")
+          legacy_source_pattern = re.compile(
+              r"01-archaeology/legacy-sifap/"
+              r"(?:natural-programs/[A-Za-z0-9_-]+\.(?:NSP|NSN|NSS|NSA|NSL|NSC|NSM|jcl)|"
+              r"adabas-ddms/[A-Za-z0-9_-]+\.(?:NSD|ddm|txt))"
+              r"(?:#L[1-9]\d*(?:-L[1-9]\d*)?)?$"
+          )
+          greenfield_source_pattern = re.compile(
+              r"\[GREENFIELD\]\s+\S(?:.*\S)?$"
+          )
+          failures = []
+          requirements_found = 0
+
+          def declared_requirements(lines: list[str]) -> list[tuple[int, str]]:
+              return [
+                  (line_number, match.group("heading") or match.group("key"))
+                  for line_number, line in enumerate(lines)
+                  if (match := requirement_declaration_pattern.match(line))
+              ]
+
+          def source_value_is_valid(value: str) -> bool:
+              value = value.strip()
+              if value[:1] in {"'", '"'}:
+                  if len(value) < 2 or value[-1:] != value[:1]:
+                      return False
+                  value = value[1:-1].strip()
+              elif value[-1:] in {"'", '"'}:
+                  return False
+
+              if greenfield_source_pattern.fullmatch(value):
+                  return True
+
+              if not legacy_source_pattern.fullmatch(value):
+                  return False
+
+              source_path = Path(value.split("#", maxsplit=1)[0])
+              return source_path.is_file()
+
+          for path in sorted(requirements_directory.rglob("*")):
+              if not path.is_file():
+                  continue
+              lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+              requirements = declared_requirements(lines)
+              requirements_found += len(requirements)
+              for index, (line_number, requirement) in enumerate(requirements):
+                  next_requirement_line = (
+                      requirements[index + 1][0]
+                      if index + 1 < len(requirements)
+                      else len(lines)
+                  )
+                  end_line = min(line_number + 21, next_requirement_line)
+                  source_values = [
+                      match.group(1)
+                      for line in lines[line_number + 1:end_line]
+                      if (match := source_pattern.match(line))
+                  ]
+                  valid_source = any(source_value_is_valid(value) for value in source_values)
+                  if not valid_source:
+                      failures.append(
+                          f"{path}:{line_number + 1}: {requirement}"
+                      )
+
+          if failures:
+              print(
+                  "::error::Todo REQ-ID deve ter uma linha source_legacy: válida "
+                  "até 20 linhas após sua declaração."
+              )
+              print("\n".join(failures))
+              print(
+                  "\nUse "
+                  "source_legacy: "
+                  "01-archaeology/legacy-sifap/natural-programs/<FILE>.NSN"
+                  "#L<start>-L<end>"
+              )
+              print(
+                  'ou source_legacy: "[GREENFIELD] <justificativa em uma linha>"'
+              )
+              raise SystemExit(1)
+
+          if requirements_found:
+              print("Todos os REQ-IDs declaram um source_legacy válido. A verificação foi aprovada.")
+          else:
+              print("Nenhum REQ-ID foi encontrado em specs/ até o momento.")
+          PY

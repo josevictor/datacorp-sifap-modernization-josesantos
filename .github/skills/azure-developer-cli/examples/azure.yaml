@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+name: sample-app
+
+infra:
+  provider: bicep
+  path: ./infra
+  module: main
+
+services:
+  api:
+    project: ./src/api
+    language: ts
+    host: appservice
+  web:
+    project: ./src/web
+    dist: dist
+    language: ts
+    host: staticwebapp
+
+# Adicione ganchos somente quando o ciclo de vida padrão não expressar o requisito.
+# Mantenha comandos não triviais em scripts/azd e forneça variantes para os dois sistemas operacionais.
+hooks:
+  preprovision:
+    windows:
+      shell: pwsh
+      run: ./scripts/azd/validate.ps1
+      interactive: false
+      continueOnError: false
+    posix:
+      shell: sh
+      run: ./scripts/azd/validate.sh
+      interactive: false
+      continueOnError: false

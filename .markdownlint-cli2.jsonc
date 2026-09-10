@@ -1,0 +1,40 @@
+{
+    // Single source of truth for Markdown lint configuration.
+    //
+    // Do NOT add inline `<!-- markdownlint-disable ... -->` comments to files.
+    // Duplicating configuration here and in file headers causes drift, and in
+    // Copilot primitives (.github/agents, prompts, skills, instructions) the
+    // comment is loaded into the model's context window for zero instructional
+    // value. See docs/DOC-STYLE-GUIDE.md section 9.
+    //
+    // The only sanctioned exception is a file that needs a rule which is NOT
+    // disabled below, e.g. docs/adr/0000-template.md disables MD024 because the
+    // template deliberately repeats headings.
+    "config": {
+        "MD003": false,
+        "MD013": false,
+        "MD025": false,
+        "MD026": false,
+        "MD028": false,
+        "MD029": false,
+        "MD033": false,
+        "MD034": false,
+        "MD036": false,
+        "MD040": false,
+        "MD051": false,
+        "MD041": false,
+        "MD060": false
+    },
+    // Third-party and generated trees that must never be linted.
+    "ignores": [
+        "**/node_modules/**",
+        "**/.next/**",
+        "**/target/**",
+        "**/.venv/**",
+        ".legacy-docs-venv/**",
+        "**/site-packages/**"
+    ],
+    // Files git ignores are not part of the deliverable, so they are not linted.
+    // This covers facilitator answer keys (**/*-ANSWER-KEY.md) and local scratch.
+    "gitignore": true
+}

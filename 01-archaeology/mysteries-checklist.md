@@ -76,12 +76,19 @@ Preencha com os IDs da sua dupla (por exemplo, a Dupla 2 preenche de `M-05` a `M
 
 | ID canônico | Encontrado | Registrado em `mysteries-found.md` |
 |---|---|---|
-| `SIFAP-M-__` | [ ] | [ ] |
-| `SIFAP-M-__` | [ ] | [ ] |
-| `SIFAP-M-__` | [ ] | [ ] |
-| `SIFAP-M-__` | [ ] | [ ] |
+| `SIFAP-M-09` | [x] | [x] |
+| `SIFAP-M-10` | [x] | [x] |
+| `SIFAP-M-11` | [x] | [x] |
+| `SIFAP-M-12` | [x] | [x] |
 
-**Achados adicionais (bônus):** <!-- liste aqui; não mudam o denominador -->
+**Achados adicionais (bônus):** 9 registrados — índices IPCA incompletos; teto de
+30% truncando desconto judicial; remessa bancária divergente após recálculo;
+`VALELEG` descartando os parâmetros do PDA e recalculando a idade sem a janela
+Y2K; regras de elegibilidade documentadas em 2012 que não existem no código;
+tabela de 27 fatores regionais contra domínio de `01-05`/`99` no DDM;
+`COD-REGION` alfanumérico comparado como número; histórico "últimos 12" sem
+ordenação por período; máscara de CPF revelando os três primeiros dígitos em um
+dos ramos. Não mudam o denominador.
 
 ---
 

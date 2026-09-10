@@ -1,9 +1,12 @@
 package com.datacorp.sifap.payments;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 interface PaymentRepository extends JpaRepository<Payment, UUID> {
 
@@ -22,4 +25,13 @@ interface PaymentRepository extends JpaRepository<Payment, UUID> {
      * <p>A ordenação explícita é a correção deliberada de REQ-040.
      */
     List<Payment> findByCpfOrderByReferencePeriodDesc(String cpf, Limit limit);
+
+    /**
+     * Chaves {@code (cpf, período)} já gravadas para os CPFs informados.
+     *
+     * <p>Usada pela carga legada para decidir idempotência em lote, evitando
+     * uma consulta por pagamento durante a importação.
+     */
+    @Query("select concat(p.cpf, '#', p.referencePeriod) from Payment p where p.cpf in :cpfs")
+    List<String> findExistingKeys(@Param("cpfs") Collection<String> cpfs);
 }

@@ -79,6 +79,45 @@ class Payment {
         return new Payment(UUID.randomUUID(), cpf, programCode, period.value(), calculation, generationDate);
     }
 
+    /**
+     * Reconstrói um pagamento já processado pelo sistema legado.
+     *
+     * <p>Os valores são preservados como foram apurados na origem, sem
+     * recálculo. O fator regional aplicado pelo legado ao longo dos anos não é
+     * reconstituível a partir do estado atual das tabelas, e recalcular
+     * substituiria o histórico real por uma reconstrução que nunca ocorreu.
+     *
+     * <p>A situação também vem da origem, em vez do {@code "G"} atribuído a um
+     * pagamento recém-gerado: o histórico contém pagamentos confirmados,
+     * pagos, devolvidos e estornados.
+     */
+    static Payment migrated(
+        String cpf,
+        String programCode,
+        int referencePeriod,
+        BigDecimal grossAmount,
+        BigDecimal discountAmount,
+        BigDecimal netAmount,
+        BigDecimal bonusAmount,
+        LocalDate generationDate,
+        String status,
+        String paymentType
+    ) {
+        Payment payment = new Payment();
+        payment.id = UUID.randomUUID();
+        payment.cpf = cpf;
+        payment.programCode = programCode;
+        payment.referencePeriod = referencePeriod;
+        payment.grossAmount = grossAmount;
+        payment.discountAmount = discountAmount;
+        payment.netAmount = netAmount;
+        payment.bonusAmount = bonusAmount;
+        payment.generationDate = generationDate;
+        payment.status = status;
+        payment.paymentType = paymentType;
+        return payment;
+    }
+
     UUID id() {
         return id;
     }

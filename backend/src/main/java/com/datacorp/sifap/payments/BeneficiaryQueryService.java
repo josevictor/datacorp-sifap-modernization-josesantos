@@ -66,9 +66,19 @@ class BeneficiaryQueryService {
      *
      * <p>O NIS não é validado antes da busca: no legado, {@code SUBVALCP} só é
      * acionado no ramo de CPF. O comportamento é preservado.
+     *
+     * <p>O zero é tratado como ausência de NIS, não como valor de busca. No
+     * Adabas, {@code AM NUM-NIS} é {@code DE,UQ,NU}: a supressão de nulos
+     * mantém os registros sem NIS fora do índice, de modo que a unicidade vale
+     * apenas entre os preenchidos e um {@code FIND} por vazio não retorna nada.
+     * Sem esta guarda, a base moderna — onde o zero é o padrão da coluna —
+     * devolveria vários registros para uma busca que espera um só.
      */
     @Transactional
     BeneficiaryQueryResponse findByNis(long nis) {
+        if (nis <= 0) {
+            throw new BeneficiaryQueryNotFoundException("Beneficiary not found");
+        }
         return respond(beneficiaryRepository.findByNis(nis));
     }
 

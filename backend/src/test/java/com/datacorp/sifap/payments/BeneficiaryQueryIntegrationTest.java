@@ -197,6 +197,24 @@ class BeneficiaryQueryIntegrationTest {
         assertEquals(0, auditTrailRepository.count());
     }
 
+    @Test
+    void should_report_not_found_when_nis_is_zero_even_with_many_such_records() {
+        // REQ-035 — regressão. O zero é o padrão da coluna `nis` desde a
+        // migração V5, então vários beneficiários o compartilham. Sem a guarda
+        // no serviço, `findByNis(0)` casaria com todos e a consulta falharia
+        // com erro de resultado múltiplo em vez de responder "não encontrado".
+        //
+        // A guarda reproduz o Adabas: `AM NUM-NIS` é DE,UQ,NU, e a supressão
+        // de nulos mantém os registros sem NIS fora do índice — um FIND por
+        // vazio não retorna nada.
+        beneficiaryRepository.save(beneficiary(CPF, 0L, "A"));
+        beneficiaryRepository.save(beneficiary("11144477735", 0L, "A"));
+
+        assertThrows(
+            BeneficiaryQueryNotFoundException.class,
+            () -> beneficiaryQueryService.findByNis(0L));
+    }
+
     private Beneficiary beneficiary(String cpf, long nis, String status) {
         return new Beneficiary(
             UUID.randomUUID(), cpf, "Pessoa Beneficiaria", 19800101, status, "P001",

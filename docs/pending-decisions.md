@@ -25,6 +25,9 @@
 | 2 | Medir o impacto das regras por tipo de programa | Coordenação de Benefícios + DBA + operação do batch | Implantação da feature `003` |
 | 3 | Alinhar com a Dupla 4 a autoria de `VALELEG` | Dupla 3 e Dupla 4 | Nada; evita retrabalho |
 | 4 | Atualizar o Next.js para uma versão sem CVE | Líder Técnico | Nada hoje; bloqueia qualquer exposição pública do frontend |
+| 5 | Decidir a conversão de `docs_ok` em branco nos cadastros anteriores a 2012 | Coordenação de Benefícios | Carga da base legada |
+| 6 | Decidir a origem de `dependent_count` nos cadastros anteriores a 2013 | Coordenação de Benefícios | Carga da base legada |
+| 7 | Decidir se `NUM-REGISTRATION` é preservado como chave de reconciliação | Arquitetura + DBA | Carga da base legada |
 
 ---
 
@@ -148,6 +151,53 @@ da atualização.
 
 Encaminhamento: fixar a versão corrigida mais recente da linha 15.x e reexecutar
 a suíte do frontend. É uma troca de versão, sem mudança de código esperada.
+
+---
+
+## 5. Conversão de `docs_ok` em branco nos cadastros anteriores a 2012
+
+`CL IND-DOCS-OK` foi criado em 2012 e é `FI` (armazenamento fixo), então os
+cadastros anteriores carregam **branco** — um terceiro estado que o domínio
+`S`/`N` não prevê. A coluna moderna é `NOT NULL DEFAULT 'S'`.
+
+| Conversão | Consequência |
+|---|---|
+| branco → `'S'` | Concede elegibilidade documental a quem nunca foi verificado |
+| branco → `'N'` | Bloqueia cadastros válidos anteriores a 2012 |
+
+**Não existe escolha tecnicamente correta.** As duas alteram o resultado da
+validação de elegibilidade para uma população que o legado nunca classificou.
+A decisão é de negócio e deve virar ADR antes da carga.
+
+---
+
+## 6. Origem de `dependent_count` nos cadastros anteriores a 2013
+
+`CK QTY-DEPEND` foi criado em 2013. Cadastros anteriores têm o campo vazio, que
+a carga leria como zero, enquanto os dependentes reais permanecem no grupo
+periódico `DA GRP-DEPEND` (1:10) — fora do escopo A.
+
+Como `dependent_count` alimenta a elegibilidade, o efeito é concreto:
+beneficiários com dependentes reais entrariam com zero e poderiam ser recusados
+indevidamente.
+
+**Recomendação técnica:** derivar o valor da contagem de ocorrências ativas de
+`GRP-DEPEND` durante a carga. Não exige tabela nova nem amplia o escopo do
+esquema — basta ler o grupo periódico na origem. A alternativa é aceitar o erro
+conscientemente, e isso precisa ser dito por escrito.
+
+---
+
+## 7. Preservação de `NUM-REGISTRATION` como chave de reconciliação
+
+`AA NUM-REGISTRATION` não é campo de negócio e não está no escopo A. Ainda
+assim, sem ele não há como reconciliar um registro carregado com sua origem,
+reexecutar uma faixa com segurança nem fazer carga incremental.
+
+O projeto de carga já o mantém na tabela de staging. A pergunta é se ele deve
+sobreviver como coluna de auditoria em `beneficiary`. Sem isso, qualquer
+divergência apurada depois da carga só pode ser investigada por CPF, que é dado
+pessoal e nem sempre suficiente.
 
 ---
 

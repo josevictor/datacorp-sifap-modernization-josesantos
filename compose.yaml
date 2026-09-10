@@ -1,0 +1,67 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sifap}
+      POSTGRES_USER: ${POSTGRES_USER:-sifap}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-sifap}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-sifap}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_FLYWAY_LOCATIONS: classpath:db/migration,classpath:db/dev
+    ports:
+      - "${BACKEND_HOST_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db-test:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: sifap_test
+      POSTGRES_USER: sifap
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    # Banco efêmero em memória: cada execução da suíte começa limpa e nada
+    # persiste entre execuções.
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sifap -d sifap_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    profiles: ["test"]
+
+  backend-test:
+    image: maven:3.9.9-eclipse-temurin-21
+    working_dir: /workspace
+    volumes:
+      - ./backend:/workspace
+      - maven_cache:/root/.m2
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db-test:5432/sifap_test
+      SPRING_DATASOURCE_USERNAME: sifap
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+    command: ["mvn", "-B", "test"]
+    depends_on:
+      db-test:
+        condition: service_healthy
+    profiles: ["test"]
+
+volumes:
+  postgres_data:
+  maven_cache:

@@ -1,5 +1,8 @@
 package com.datacorp.sifap.shared.exception;
 
+import com.datacorp.sifap.payments.BeneficiaryQueryNotFoundException;
+import com.datacorp.sifap.payments.BeneficiaryQueryRejectedException;
+import com.datacorp.sifap.payments.BeneficiaryQuerySearchCriteriaException;
 import com.datacorp.sifap.payments.PaymentGenerationNotFoundException;
 import com.datacorp.sifap.payments.PaymentGenerationRejectedException;
 import java.net.URI;
@@ -25,6 +28,21 @@ class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
         return problem(HttpStatus.BAD_REQUEST, "Invalid request");
+    }
+
+    @ExceptionHandler(BeneficiaryQueryNotFoundException.class)
+    ProblemDetail handleBeneficiaryNotFound(BeneficiaryQueryNotFoundException ex) {
+        return problem(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(BeneficiaryQueryRejectedException.class)
+    ProblemDetail handleBeneficiaryRejected(BeneficiaryQueryRejectedException ex) {
+        return problem(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
+    }
+
+    @ExceptionHandler(BeneficiaryQuerySearchCriteriaException.class)
+    ProblemDetail handleSearchCriteria(BeneficiaryQuerySearchCriteriaException ex) {
+        return problem(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     private ProblemDetail problem(HttpStatus status, String detail) {

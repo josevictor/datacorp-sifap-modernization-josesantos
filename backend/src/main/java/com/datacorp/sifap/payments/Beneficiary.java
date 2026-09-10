@@ -91,6 +91,14 @@ class Beneficiary {
         return cpf;
     }
 
+    UUID id() {
+        return id;
+    }
+
+    String fullName() {
+        return fullName;
+    }
+
     int birthYear() {
         return birthDate / 10000;
     }

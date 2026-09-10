@@ -62,6 +62,32 @@ services:
         condition: service_healthy
     profiles: ["test"]
 
+  frontend:
+    image: node:22-alpine
+    working_dir: /workspace
+    volumes:
+      - ./frontend:/workspace
+      - frontend_node_modules:/workspace/node_modules
+    environment:
+      # Sem o prefixo NEXT_PUBLIC_: o endereço interno da API fica no
+      # servidor, fora do pacote enviado ao navegador.
+      API_URL: http://backend:8080
+    command: ["sh", "-c", "npm install && npm run dev -- --hostname 0.0.0.0"]
+    ports:
+      - "${FRONTEND_HOST_PORT:-3000}:3000"
+    depends_on:
+      - backend
+
+  frontend-test:
+    image: node:22-alpine
+    working_dir: /workspace
+    volumes:
+      - ./frontend:/workspace
+      - frontend_node_modules:/workspace/node_modules
+    command: ["sh", "-c", "npm install && npm run test"]
+    profiles: ["test"]
+
 volumes:
   postgres_data:
   maven_cache:
+  frontend_node_modules:

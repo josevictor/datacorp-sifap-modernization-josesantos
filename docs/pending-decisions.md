@@ -22,7 +22,9 @@
 | # | Pendência | Responsável | Bloqueia |
 |---|---|---|---|
 | 1 | Ratificar a separação entre a dedução simplificada e `CALCDSCT` | Coordenação de Benefícios | Fechamento de `SIFAP-M-09` e do ADR-0004 |
-| 2 | Medir o impacto das regras por tipo de programa | Coordenação de Benefícios + DBA + operação do batch | Implantação da feature `003` || 3 | Alinhar com a Dupla 4 a autoria de `VALELEG` | Dupla 3 e Dupla 4 | Nada; evita retrabalho |
+| 2 | Medir o impacto das regras por tipo de programa | Coordenação de Benefícios + DBA + operação do batch | Implantação da feature `003` |
+| 3 | Alinhar com a Dupla 4 a autoria de `VALELEG` | Dupla 3 e Dupla 4 | Nada; evita retrabalho |
+| 4 | Atualizar o Next.js para uma versão sem CVE | Líder Técnico | Nada hoje; bloqueia qualquer exposição pública do frontend |
 
 ---
 
@@ -124,6 +126,28 @@ os IDs canônicos da Dupla 4.
 Arquivos tocados, para evitar conflito: `EligibilityValidationService`,
 `EligibilityCode`, `EligibilityReason`, `EligibilityStatus`, `ProgramTypeRule`
 e a migração `V5`.
+
+---
+
+## 4. Atualizar o Next.js para uma versão sem CVE
+
+O módulo `frontend/` foi criado com `next@15.1.6`, que o registro do npm marca
+com vulnerabilidade de segurança
+([CVE-2025-66478](https://nextjs.org/blog/CVE-2025-66478)). A instalação também
+reporta oito vulnerabilidades no conjunto de dependências, duas delas críticas.
+
+**Decisão registrada em 2026-09-10:** a atualização foi adiada
+deliberadamente para não interromper a entrega da feature `004`. O risco atual
+é baixo porque o frontend roda apenas em `localhost`, por Docker, sem exposição
+de rede e sem dados reais.
+
+**O risco deixa de ser baixo no momento em que qualquer uma destas coisas
+acontecer:** o frontend ser publicado em ambiente acessível, receber dados de
+produção ou entrar em pipeline de implantação. Nenhuma delas deve ocorrer antes
+da atualização.
+
+Encaminhamento: fixar a versão corrigida mais recente da linha 15.x e reexecutar
+a suíte do frontend. É uma troca de versão, sem mudança de código esperada.
 
 ---
 

@@ -22,7 +22,7 @@
 | # | Pendência | Responsável | Bloqueia |
 |---|---|---|---|
 | 1 | Ratificar a separação entre a dedução simplificada e `CALCDSCT` | Coordenação de Benefícios | Fechamento de `SIFAP-M-09` e do ADR-0004 |
-| 2 | Medir o impacto das regras por tipo de programa | Coordenação de Benefícios + DBA + operação do batch | Implantação da feature `003` |
+| 2 | Medir o impacto das regras por tipo de programa | Coordenação de Benefícios + DBA + operação do batch | Implantação da feature `003` — **medição no laboratório indica 30,3% de recusa** |
 | 3 | Alinhar com a Dupla 4 a autoria de `VALELEG` | Dupla 3 e Dupla 4 | Nada; evita retrabalho |
 | 4 | Atualizar o Next.js para uma versão sem CVE | Líder Técnico | Nada hoje; bloqueia qualquer exposição pública do frontend |
 | 5 | Decidir a conversão de `docs_ok` em branco nos cadastros anteriores a 2012 | Coordenação de Benefícios | Carga da base legada |
@@ -82,10 +82,9 @@ As regras por tipo de programa **não têm esse escape**. São literais fixos em
 deixa de receber na primeira execução com a validação ativa.
 
 > [!WARNING]
-> A equipe da imersão **não tem acesso a dados de produção**, então esta
-> medição não foi feita e não pode ser simulada. A feature `003` está pronta e
-> testada, mas não deve ser implantada antes que alguém com acesso ao cadastro
-> real execute a consulta abaixo e avalie o resultado.
+> A equipe da imersão **não tem acesso a dados de produção**. A medição abaixo
+> foi feita sobre a extração sintética do laboratório e **não substitui** a
+> execução contra o cadastro real.
 
 A consulta de medição está pronta em
 [`impact-query.sql`](../specs/003-elegibilidade/impact-query.sql). É somente
@@ -105,11 +104,53 @@ psql -U <usuario> -d <base> -v ON_ERROR_STOP=1 \
   < specs/003-elegibilidade/impact-query.sql
 ```
 
+### Medição no laboratório (2026-09-10)
+
+As mesmas regras aplicadas aos 500 cadastros de
+[`legacy-seed-data/`](../01-archaeology/legacy-seed-data/), com ano de
+referência 2018:
+
+| Resultado | Valor |
+|---|---:|
+| Beneficiários ativos avaliados | 475 |
+| Protegidos pelo desvio da região `99` | 5 |
+| **Afetados — deixariam de receber** | **144 (30,3%)** |
+| ├ Documentação incompleta | 106 |
+| └ Renda acima de 600,00 sem dependentes | 38 |
+
+**Os dois números têm pesos de evidência muito diferentes.**
+
+Os 106 por documentação são **artefato do gerador**, não sinal do mundo real:
+`IND-DOCS-OK` é sorteado como `N` em 25% dos casos, e o número simplesmente
+reflete esse sorteio. Não diz nada sobre a distribuição em produção.
+
+Os 38 por renda sem dependentes são **estruturais**. Decorrem do cruzamento de
+faixas de renda com contagem de dependentes que o gerador constrói
+deliberadamente para cobrir as bandas de cálculo. Esse mecanismo existe em
+produção, ainda que a proporção seja desconhecida.
+
+O caso `78933359478` ilustra o problema melhor que o agregado:
+`MARIA MARTINS OLIVEIRA`, 71 anos, ativa, com quatro pagamentos registrados,
+renda familiar de `1.000,00` em família de quatro pessoas e nenhum dependente
+cadastrado. **Recebe no legado e seria recusada pela regra.** Sua renda per
+capita é `250,00`, bem abaixo do teto de `600,00` do próprio programa: a regra
+de tipo `A` usa renda **familiar**, não per capita.
+
+**O que a medição autoriza concluir:** a regra recusa uma fração não trivial de
+beneficiários ativos, e o mecanismo de recusa por renda sem dependentes atinge
+justamente quem o programa parece destinado a atender. **O que não autoriza:**
+estimar o percentual em produção. Os 30,3% são do laboratório.
+
 | Resultado | Encaminhamento sugerido |
 |---|---|
 | Zero afetados | Implantar sem ação adicional |
 | Poucos afetados | Tratar caso a caso antes da implantação |
 | Muitos afetados | Não implantar; a regra legada provavelmente não reflete a operação real |
+
+A medição no laboratório cai na terceira faixa. Ela não decide a implantação,
+mas eleva a prioridade da medição real e sugere que a pergunta a levar à
+Coordenação de Benefícios não é apenas "quantos são", e sim **se a regra de
+renda familiar sem dependentes reflete a intenção do programa**.
 
 ---
 
@@ -169,6 +210,12 @@ cadastros anteriores carregam **branco** — um terceiro estado que o domínio
 validação de elegibilidade para uma população que o legado nunca classificou.
 A decisão é de negócio e deve virar ADR antes da carga.
 
+> [!WARNING]
+> A extração do laboratório **não exercita este caso**: o gerador preenche
+> `IND-DOCS-OK` sempre com `S` ou `N`, nunca em branco. Uma carga bem sucedida
+> nos 500 registros sintéticos não demonstra que a decisão foi tomada — apenas
+> que a população que a exige não está presente.
+
 ---
 
 ## 6. Origem de `dependent_count` nos cadastros anteriores a 2013
@@ -185,6 +232,11 @@ indevidamente.
 `GRP-DEPEND` durante a carga. Não exige tabela nova nem amplia o escopo do
 esquema — basta ler o grupo periódico na origem. A alternativa é aceitar o erro
 conscientemente, e isso precisa ser dito por escrito.
+
+> [!WARNING]
+> A extração do laboratório **não exercita este caso**: o gerador mantém
+> `QTY-DEPEND` sempre coerente com o grupo periódico. A população anterior a
+> 2013, que produz a divergência, não está nos dados sintéticos.
 
 ---
 

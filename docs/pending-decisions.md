@@ -31,15 +31,26 @@
 O [ADR-0004](adr/0004-simplified-deduction-monthly-flow.md) está em `proposed` e
 propõe a resolução de `SIFAP-M-09`.
 
-**A parte técnica está fechada por evidência de código.** O job mensal
-`SIFAPJ01` executa apenas `BATCHPGT` (`SIFAPJ01.jcl:70-77`), que aplica a
-dedução simplificada inline e gera a remessa bancária
-(`BATCHPGT.NSP:455-500`). `CALCDSCT` é interativo (`CALCDSCT.NSP:71-75`) e não
-integra o fluxo mensal. A documentação de 2012 afirma o contrário e está
-errada.
+**A questão técnica está encerrada.** `BATCHPGT` contém exatamente três
+`CALLNAT` — `SUBVALCP`, `VALELEG` e `CALCBENF` — e nenhuma chamada a
+`CALCDSCT`. A cadeia de quatro elos foi projetada e documentada no PDA em 2011
+pelo próprio autor do `CALCDSCT`, mas apenas dois foram ligados: o programa usa
+`INPUT` de tela e é incompatível com `CALLNAT`.
 
-**O que falta é decisão de negócio, não análise.** A separação define qual
-valor chega à pessoa beneficiária. Um recálculo por `CALCDSCT` posterior à
+Em outras palavras, a dedução simplificada **não é o desvio de uma integração
+que existiu**. É a única dedução que já rodou no fluxo mensal desde 1997.
+
+As três fontes que afirmam o contrário — o PDA, o cabeçalho do batch e a
+documentação de 2012 — descrevem a arquitetura pretendida. A de 2012 declara no
+próprio texto que não teve acesso ao programa e erra outros três pontos
+verificáveis no mesmo trecho.
+
+**O que falta é uma confirmação de negócio, não análise.** A Coordenação de
+Benefícios precisa dizer se sabe que o valor pago usa a regra simplificada e se
+considera isso correto. A evidência mostra o que o sistema faz e por quê; não
+mostra se é o desejado.
+
+Fica registrado, como item próprio, que um recálculo por `CALCDSCT` posterior à
 remessa diverge do valor já transmitido ao banco, sem mecanismo de conciliação
 localizado no código.
 

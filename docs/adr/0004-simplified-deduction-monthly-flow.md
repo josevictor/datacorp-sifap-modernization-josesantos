@@ -58,6 +58,89 @@ A documentação de 2012 afirma que o batch mensal invoca a rotina detalhada:
 A conclusão é que a documentação descreve uma integração que não existe no
 código. O valor que chega ao banco é o da dedução simplificada.
 
+### A integração foi projetada, mas nunca implementada
+
+Três fontes afirmam que o batch invoca `CALCDSCT`, e é importante entender por
+que elas existem em vez de descartá-las como erro simples:
+
+| Fonte | Afirmação |
+|---|---|
+| `PDACALC.NSA:11-16` | Declara a "cadeia de pagamento" como `VALELEG` → `CALCBENF` → `CALCDSCT` → `CALCCORR`, e reserva o campo de saída `#PC-AMT-DISC` |
+| `BATCHPGT.NSP:17` | `CALLS CALCBENF AND CALCDSCT` |
+| `BUSINESS-RULES-2012.md:218` | "os descontos são aplicados pela invocação de CALCDSCT" |
+
+O histórico esclarece a origem: em `30/09/2011`, Roberto Mendes — autor do
+próprio `CALCDSCT` — registrou em `BATCHPGT` a alteração
+`ADD CALLNAT CHAIN`. A cadeia foi projetada com quatro elos e documentada
+como tal no PDA e no cabeçalho do batch.
+
+**Apenas dois elos foram ligados.** `BATCHPGT` contém exatamente três
+`CALLNAT` em todo o programa — `SUBVALCP` (linha 276), `VALELEG` (linha 369) e
+`CALCBENF` (linha 381). Não há `CALLNAT`, `FETCH` ou `PERFORM` para
+`CALCDSCT` em lugar algum do batch.
+
+`VALELEG` e `CALCBENF` declaram `PARAMETER USING PDACALC` e recebem os 16
+campos do PDA na chamada. `CALCDSCT` não declara `PARAMETER USING` algum: usa
+`INPUT` de tela (`CALCDSCT.NSP:71-75`), o que o torna incompatível com
+`CALLNAT` sem refatoração.
+
+A conclusão não é que a documentação errou por descuido, e sim que ela
+descreve a **arquitetura pretendida**. A dedução simplificada nunca foi um
+desvio de uma integração que existiu: é a única dedução que já rodou no fluxo
+mensal.
+
+### A fonte de 2012 declara que não analisou `CALCDSCT`
+
+A seção de descontos do documento de 2012 não se baseia em leitura de código.
+O próprio texto registra:
+
+> "Não foi possível confirmar isso no código, pois o acesso ao programa
+> CALCDSCT é restrito e a análise não foi concluída durante o levantamento."
+>
+> — `BUSINESS-RULES-2012.md:158-162`
+
+A seção inteira foi obtida "em entrevista com Marcos Antônio Ferreira"
+(`BUSINESS-RULES-2012.md:154`) e contém marcações de incompletude explícitas,
+como `[A COMPLETAR]` com a anotação "mais 2 ou 3 tipos"
+(`BUSINESS-RULES-2012.md:171`).
+
+Os próprios tipos de desconto descritos divergem da implementação: o documento
+lista códigos numéricos `01` a `05`, enquanto o código usa códigos de um
+caractere (`C`, `I`, `J`, `S`, `P`, `A`) em `TYPE-DISC (A3)`.
+
+A mesma seção 5.1 erra em outros dois pontos verificáveis:
+
+| Afirmação de 2012 | Código |
+|---|---|
+| Processamento em ordem alfabética por nome | `READ BENEFICIARY-V BY NUM-CPF` (`BATCHPGT.NSP:250`), com a alteração de `15/01/2000` registrando `OPTIMIZE CPF ORDER` |
+| Pagamento gravado com situação `P` (pendente) | `MOVE 'G' TO PAYMENT-V.STAT-PAYMENT` (`BATCHPGT.NSP:483`) |
+
+Uma afirmação sobre integração, feita por quem declara não ter tido acesso ao
+programa integrado, e cercada de outros três erros verificáveis no mesmo
+trecho, não sustenta a reversão de um comportamento observado no código
+executado.
+
+### `CALCDSCT` não é código morto
+
+Uma leitura possível seria que `CALCDSCT` é um resquício abandonado. O
+histórico de manutenção **contradiz essa hipótese**:
+
+| Data | Programa | Alteração |
+|---|---|---|
+| 12/04/2007 | `CALCDSCT` | Inclusão do desconto judicial |
+| 30/09/2015 | `CALCDSCT` | **Novas alíquotas** |
+| 14/06/2016 | ambos | Ticket 7210, padronização de DDM em massa |
+
+Alterar alíquotas de desconto é mudança de regra de negócio com impacto
+financeiro direto, solicitada por alguém e priorizada em 2015. Não se investe
+nisso em código que ninguém executa. O inventário do sistema classifica o
+programa como em `Produção`
+(`01-archaeology/legacy-sifap/README.md:178`).
+
+A evidência sustenta que os dois caminhos estão **ambos vivos**, com
+finalidades distintas: um roda no batch mensal, o outro é operado por pessoa,
+sob demanda, em tela.
+
 ---
 
 ## Decisão
@@ -133,16 +216,29 @@ item próprio.
 
 ## O que precisa de ratificação humana
 
-A Coordenação de Benefícios precisa confirmar:
+A investigação técnica **respondeu a primeira das duas perguntas** que este
+ADR trazia originalmente.
 
-1. Se a dedução simplificada é a regra oficial vigente ou um defeito tolerado
-   por 27 anos.
-2. Se a divergência entre pagamento recalculado e remessa já transmitida é
-   conhecida e aceita pela operação.
+**Respondida — a dedução simplificada é um defeito tolerado por 27 anos?**
+Não. A cadeia de quatro elos foi projetada em 2011 e documentada no PDA, mas
+`CALCDSCT` nunca foi ligado a ela, porque é interativo e incompatível com
+`CALLNAT`. A dedução simplificada não é um desvio de uma integração que
+existiu: é a única que já rodou no fluxo mensal. As três fontes que afirmam o
+contrário descrevem intenção de arquitetura, e a de 2012 declara no próprio
+texto que não teve acesso ao programa.
+
+**Em aberto — o comportamento observado corresponde à intenção da área?**
+A Coordenação de Benefícios precisa confirmar dois pontos:
+
+1. Que a área sabe que o valor pago usa a regra simplificada e considera isso
+   correto. A evidência técnica mostra o que o sistema faz e por quê, mas não
+   diz se é o desejado.
+2. Se a divergência entre pagamento recalculado por `CALCDSCT` e remessa já
+   transmitida é conhecida e aceita pela operação.
 
 Enquanto não houver ratificação, o status deste ADR permanece `proposed` e
-`SIFAP-M-09` permanece aberto quanto à decisão de negócio, ainda que a questão
-técnica esteja resolvida.
+`SIFAP-M-09` permanece aberto quanto à decisão de negócio. A questão técnica
+está encerrada.
 
 ---
 
@@ -157,7 +253,10 @@ técnica esteja resolvida.
   - `01-archaeology/legacy-sifap/natural-programs/CALCDSCT.NSP:62-69`
   - `01-archaeology/legacy-sifap/natural-programs/CALCDSCT.NSP:71-75`
   - `01-archaeology/legacy-sifap/natural-programs/BATCHPGT.NSP:455-500`
+  - `01-archaeology/legacy-sifap/natural-programs/BATCHPGT.NSP:369-381`
+  - `01-archaeology/legacy-sifap/natural-programs/PDACALC.NSA:11-16`
   - `01-archaeology/legacy-sifap/natural-programs/SIFAPJ01.jcl:70-77`
+  - `01-archaeology/legacy-sifap/legacy-docs/BUSINESS-RULES-2012.md:154-162`
   - `01-archaeology/legacy-sifap/legacy-docs/BUSINESS-RULES-2012.md:220`
 
 ---

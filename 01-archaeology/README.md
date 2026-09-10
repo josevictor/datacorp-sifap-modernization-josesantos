@@ -57,6 +57,8 @@ As 5 duplas trabalham em paralelo, cada uma responsável por 3 programas Natural
 
 O código legado está em [`legacy-sifap/`](legacy-sifap/) (compartilhado pelo kit).
 
+A extração de dados sintéticos do laboratório está em [`legacy-seed-data/`](legacy-seed-data/): quatro arquivos de largura fixa (`beneficiary`, `payment`, `social-program`, `audit`) com os layouts `ADACMP` correspondentes. Ela **não substitui a leitura do código** — o gate de rastreabilidade continua exigindo `source_legacy:` apontando para programas Natural ou DDMs. Serve para confrontar hipóteses com dados: vários mistérios do registro foram estreitados assim. Os arquivos contêm campos binários em decimal compactado e não devem ser abertos em editor de texto; veja [`docs/data-migration.md`](../docs/data-migration.md).
+
 O laboratório compartilhado do Azure é operado fora deste repositório. Participantes não recebem material de implantação ou administração; use o visualizador somente leitura descrito em [`docs/legacy-system-access.md`](../docs/legacy-system-access.md).
 
 ---

@@ -33,6 +33,7 @@
 | [`4-agents-explained.md`](4-agents-explained.md) | Explicação dos quatro agentes de estágio e de sua relação com os kits de persona |
 | [`persona-agent-matrix.md`](persona-agent-matrix.md) | Matriz que mostra quem lidera, apoia ou observa em cada estágio |
 | [`sdlc-flow-guide.md`](sdlc-flow-guide.md) | Fluxo completo do dia, handoffs e entregáveis |
+| [`pending-decisions.md`](pending-decisions.md) | Pendências que exigem decisão de negócio ou dados de produção |
 | `api.md` _(criado pelo time)_ | Visão geral do OpenAPI e resumo dos endpoints |
 | [`runbook.md`](runbook.md) | Como executar o sistema localmente, na CI e no Azure |
 

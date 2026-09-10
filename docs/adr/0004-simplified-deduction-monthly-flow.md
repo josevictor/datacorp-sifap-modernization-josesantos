@@ -13,6 +13,8 @@
 > Este ADR propõe a resolução da questão `SIFAP-M-09`. A parte técnica está
 > fundamentada em evidência de código. A ratificação depende da Coordenação de
 > Benefícios, porque a decisão define qual valor chega à pessoa beneficiária.
+> A pendência está registrada em
+> [`pending-decisions.md`](../pending-decisions.md).
 
 ---
 

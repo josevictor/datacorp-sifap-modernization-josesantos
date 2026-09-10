@@ -42,6 +42,7 @@
 | A proporcionalidade do décimo-terceiro deve ser criada como regra nova ou descartada formalmente? | `mysteries-found.md#SIFAP-M-11` | Coordenação de benefícios |
 | A região `99` possui significado operacional além do fator neutro observado no cálculo? **Evidência técnica encontrada:** em `VALELEG` ela dispensa todas as validações de elegibilidade. A decisão de negócio continua aberta. | `mysteries-found.md#SIFAP-M-12`; `VALELEG.NSN:120-128` | Coordenação de benefícios + DBA + auditoria |
 | As regras de elegibilidade descritas na documentação de 2012 e ausentes do código foram removidas, nunca implementadas ou vivem em outro programa? | `mysteries-found.md`, achado `BONUS`; `BUSINESS-RULES-2012.md:186-196` | Coordenação de benefícios + arquitetura |
+| Quantos beneficiários ativos recebem hoje por programa cujo tipo os recusaria, e o que fazer com eles? As regras por tipo de programa são literais fixos no legado e não podem ser desativadas por parâmetro, ao contrário de faixa etária, teto de renda e NIS. Na primeira execução com a validação ativa, esses beneficiários deixam de receber. | `VALELEG.NSN:196-243`; `specs/003-elegibilidade/plan.md`, seção sobre padrões inertes | Coordenação de benefícios + DBA + operação do batch |
 
 ---
 

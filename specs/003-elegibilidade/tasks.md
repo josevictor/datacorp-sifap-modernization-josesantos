@@ -89,6 +89,24 @@ tarefas rodam por Docker, conforme o plano técnico.
 - [ ] T224 — Medir, em produção, quantos beneficiários ativos recebem hoje por
   programa cujo tipo os recusaria. Bloqueia a implantação, não os testes.
 
+  Consulta pronta em [`impact-query.sql`](impact-query.sql). É somente leitura
+  e fica fora de `db/migration` de propósito, para que o Flyway não a execute.
+  Deve rodar contra uma cópia dos dados de produção, substituindo o ano do
+  período a processar.
+
+  Responsáveis: Coordenação de Benefícios, DBA e operação do batch. Questão
+  registrada em
+  [`scope-decisions.md`](../../02-modern-spec/scope-decisions.md) e em
+  [`pending-decisions.md`](../../docs/pending-decisions.md).
+
+  Decisão a tomar com o resultado em mãos:
+
+  | Resultado | Encaminhamento sugerido |
+  |---|---|
+  | Zero afetados | Implantar sem ação adicional |
+  | Poucos afetados | Tratar caso a caso antes da implantação |
+  | Muitos afetados | Não implantar; a regra legada provavelmente não reflete a operação real e precisa de decisão de negócio |
+
 ## Regras não implementadas por ausência de evidência
 
 As regras abaixo constam da documentação de 2012 e **não** existem no código
